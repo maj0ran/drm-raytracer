@@ -22,13 +22,13 @@ Object *plane_create(Point *p, Vec *n, Color *c) {
 
 Vec plane_surface_normal(Object *o, __attribute__((unused)) Vec *hit_point) {
     Plane *p = (Plane *)o;
-    return p->normal;
+    return v_neg(&p->normal);
 }
 
 bool plane_intersect(struct Object *o, Ray *ray, float *intersect) {
     Plane *p = (Plane *)o;
     float denom = v_dot(&p->normal, &ray->direction);
-    if (denom > 0.01) {
+    if (denom > 0.0001) {
         Vec v = v_sub(&p->origin, &ray->origin);
         float distance = v_dot(&v, &p->normal) / denom;
         if (distance >= 0.0) {

@@ -80,7 +80,7 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     if (in_light) {
         light_intensity = scene->sunlight.intensity;
     } else {
-        light_intensity = 0.0;
+        light_intensity = 1.0;
     }
     light_power = v_dot(&normal, &dir_to_light) * light_intensity;
     c = c_add(&c, &i->object->color);

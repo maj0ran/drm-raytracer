@@ -49,7 +49,7 @@ int main(int argc, const char **argv) {
 
     Vec floor_pos = {.x = 0, .y = 800, .z = 0};
     Vec floor_normal = {.x = 0, .y = 1, .z = 0};
-    Color floor_color = {.r = 1.0, .g = 0.5, .b = 0.05 };
+    Color floor_color = {.r = 0.5, .g = 0.3, .b = 0.05 };
 
     Object *sphere_red = sphere_create(&s1_pos, 200.0, &red);
     Object *sphere_green = sphere_create(&s2_pos, 200.0, &green);
@@ -59,7 +59,7 @@ int main(int argc, const char **argv) {
     sphere_red->surface = Diffuse;
     sphere_green->surface = Diffuse;
     sphere_blue->surface = Diffuse;
-    floor->surface = Diffuse;
+    floor->surface = Reflective;
 
     scene_add_object(&scene, sphere_red);
     scene_add_object(&scene, sphere_green);
