@@ -1,6 +1,7 @@
 #include "scene.h"
 #include "color.h"
 #include "draw.h"
+#include "object.h"
 #include "sphere.h"
 #include <math.h>
 
@@ -22,29 +23,28 @@ int scene_add_object(Scene *scene, Object *obj) {
     return 0;
 }
 
-
 static Ray create_reflection(Ray *ray, Point *hit_point, Vec *surface_normal) {
 
     Vec offset = v_mul_s(surface_normal, EPS);
     Point reflect_origin = v_add(hit_point, &offset);
 
-    Vec reflect_direction = v_mul_s(surface_normal, v_dot(&ray->direction, surface_normal) * 2.0);
+    Vec reflect_direction =
+        v_mul_s(surface_normal, v_dot(&ray->direction, surface_normal) * 2.0);
     reflect_direction = v_sub(&ray->direction, &reflect_direction);
-
-    Ray reflect_ray = { .origin = reflect_origin, .direction = reflect_direction };
+    Ray reflect_ray = {.origin = reflect_origin,
+                       .direction = reflect_direction};
     return reflect_ray;
-
 }
 void set_sunlight(Scene *scene, Vec *sun_direction, float sun_intensity) {
     scene->sunlight.direction = *sun_direction;
     scene->sunlight.intensity = sun_intensity;
 }
 
-Color get_color(Scene *scene, Ray *ray, Intersection *i) {
+Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
     Point hit_point = v_mul_s(&ray->direction, i->distance);
     hit_point = v_add(&ray->origin, &hit_point);
     Color c;
-    Surface surface_type = i->object->surface;
+    SurfaceType surface_type = i->object->surface.type;
 
     switch (surface_type) {
     case Diffuse:
@@ -52,6 +52,14 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i) {
         break;
     case Reflective:
         c = shadow_diffuse(scene, ray, i);
+        float reflectivity = i->object->surface.reflectivity;
+        Vec normal = surface_normal(i->object, &hit_point);
+        Ray reflection_ray = create_reflection(ray, &hit_point, &normal);
+
+        c = c_mul_s(&c, reflectivity);
+        Color i_reflection = cast_ray(scene, &reflection_ray, depth + 1);
+        i_reflection = c_mul_s(&i_reflection, reflectivity);
+        c = c_add(&c, &i_reflection);
         break;
     case Refractive:
         break;
@@ -59,6 +67,21 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i) {
 
     clamp(&c);
 
+    return c;
+}
+
+Color cast_ray(Scene *scene, Ray *ray, uint8_t depth) {
+    if (depth >= 4) {
+        Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
+        return c;
+    }
+
+    Intersection i = trace_ray(scene, ray);
+    if (i.object != NULL) {
+        return get_color(scene, ray, &i, depth);
+    }
+
+    Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
     return c;
 }
 
@@ -80,7 +103,7 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     if (in_light) {
         light_intensity = scene->sunlight.intensity;
     } else {
-        light_intensity = 1.0;
+        light_intensity = 0.0;
     }
     light_power = v_dot(&normal, &dir_to_light) * light_intensity;
     c = c_add(&c, &i->object->color);
@@ -121,7 +144,7 @@ void render(Scene *scene, struct drm_dev *dev) {
             Color c = {.r = 0.1, .g = 0.5, .b = 0.4};
             Intersection intersection = trace_ray(scene, &ray);
             if (intersection.object != NULL) {
-                c = get_color(scene, &ray, &intersection);
+                c = cast_ray(scene, &ray, 0);
             }
             plot(dev, i, j, &c);
         }

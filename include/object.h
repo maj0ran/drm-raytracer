@@ -8,6 +8,17 @@ typedef enum SURFACE_TYPE {
     Diffuse,
     Reflective,
     Refractive,
+} SurfaceType;
+
+typedef struct _Surface {
+    SurfaceType type;
+    union {
+        float reflectivity;
+        struct {
+            float index;
+            float transparency;
+        };
+    };
 } Surface;
 
 typedef struct Object {
