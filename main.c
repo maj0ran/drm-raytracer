@@ -46,12 +46,26 @@ int main(int argc, const char **argv) {
     Vec s1_pos = {.x = 900, .y = 100, .z = 100};
     Vec s2_pos = {.x = 100, .y = 300, .z = 200};
     Vec s3_pos = {.x = 700, .y = 500, .z = 100};
+
+    Vec floor_pos = {.x = 0, .y = 800, .z = 0};
+    Vec floor_normal = {.x = 0, .y = 1, .z = 0};
+    Color floor_color = {.r = 1.0, .g = 0.5, .b = 0.05 };
+
     Object *sphere_red = sphere_create(&s1_pos, 200.0, &red);
     Object *sphere_green = sphere_create(&s2_pos, 200.0, &green);
     Object *sphere_blue = sphere_create(&s3_pos, 200.0, &blue);
+    Object *floor = plane_create(&floor_pos, &floor_normal, &floor_color);
+
+    sphere_red->surface = Diffuse;
+    sphere_green->surface = Diffuse;
+    sphere_blue->surface = Diffuse;
+    floor->surface = Diffuse;
+
     scene_add_object(&scene, sphere_red);
     scene_add_object(&scene, sphere_green);
     scene_add_object(&scene, sphere_blue);
+    scene_add_object(&scene, floor);
+
     Vec sun_direction = { .x = 1.0, .y = 1.0, .z = 1.0 };
     Sunlight sunlight = { .direction = sun_direction, .intensity = 1.0 };
     scene.sunlight = sunlight;

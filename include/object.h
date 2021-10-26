@@ -4,9 +4,16 @@
 #include "ray.h"
 #include <stdbool.h>
 
+typedef enum SURFACE_TYPE {
+    Diffuse,
+    Reflective,
+    Refractive,
+} Surface;
+
 typedef struct Object {
   const struct ObjectInterface *const vtable;
   Color color;
+  Surface surface;
 } Object;
 
 typedef struct ObjectInterface {

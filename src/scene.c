@@ -22,6 +22,19 @@ int scene_add_object(Scene *scene, Object *obj) {
     return 0;
 }
 
+
+static Ray create_reflection(Ray *ray, Point *hit_point, Vec *surface_normal) {
+
+    Vec offset = v_mul_s(surface_normal, EPS);
+    Point reflect_origin = v_add(hit_point, &offset);
+
+    Vec reflect_direction = v_mul_s(surface_normal, v_dot(&ray->direction, surface_normal) * 2.0);
+    reflect_direction = v_sub(&ray->direction, &reflect_direction);
+
+    Ray reflect_ray = { .origin = reflect_origin, .direction = reflect_direction };
+    return reflect_ray;
+
+}
 void set_sunlight(Scene *scene, Vec *sun_direction, float sun_intensity) {
     scene->sunlight.direction = *sun_direction;
     scene->sunlight.intensity = sun_intensity;
@@ -30,7 +43,21 @@ void set_sunlight(Scene *scene, Vec *sun_direction, float sun_intensity) {
 Color get_color(Scene *scene, Ray *ray, Intersection *i) {
     Point hit_point = v_mul_s(&ray->direction, i->distance);
     hit_point = v_add(&ray->origin, &hit_point);
-    Color c = shadow_diffuse(scene, ray, i);
+    Color c;
+    Surface surface_type = i->object->surface;
+
+    switch (surface_type) {
+    case Diffuse:
+        c = shadow_diffuse(scene, ray, i);
+        break;
+    case Reflective:
+        c = shadow_diffuse(scene, ray, i);
+        break;
+    case Refractive:
+        break;
+    }
+
+    clamp(&c);
 
     return c;
 }
@@ -56,10 +83,8 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
         light_intensity = 0.0;
     }
     light_power = v_dot(&normal, &dir_to_light) * light_intensity;
-//    printf("%f\n", light_power);
     c = c_add(&c, &i->object->color);
     c = c_mul_s(&c, light_power);
-    clamp(&c);
     return c;
 }
 
@@ -77,6 +102,7 @@ Intersection trace_ray(Scene *scene, Ray *ray) {
             }
         }
     }
+
     i.distance = nearest_intersection;
     i.object = nearest_object;
     return i;
@@ -92,11 +118,12 @@ void render(Scene *scene, struct drm_dev *dev) {
             Vec direction = v_sub(&target, &origin);
             direction = v_normalize(&direction);
             Ray ray = {origin, direction};
+            Color c = {.r = 0.1, .g = 0.5, .b = 0.4};
             Intersection intersection = trace_ray(scene, &ray);
             if (intersection.object != NULL) {
-                Color c = get_color(scene, &ray, &intersection);
-                plot(dev, i, j, &c);
+                c = get_color(scene, &ray, &intersection);
             }
+            plot(dev, i, j, &c);
         }
     }
 }

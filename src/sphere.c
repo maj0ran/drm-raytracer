@@ -54,10 +54,12 @@ struct Object *sphere_create(Vec *position, float radius, Color *color) {
                                            .surface_normal = sphere_surface_normal};
 
     static Object base = {.vtable = &vtable};
+    base.color = *color;
+
     Sphere *sphere = malloc(sizeof(*sphere));
     memcpy(&sphere->base, &base, sizeof(struct Object));
 
-    sphere->base.color = *color;
+//    sphere->base.color = *color;
     sphere->center = *position;
     sphere->radius = radius;
 
