@@ -38,24 +38,24 @@ int main(int argc, const char **argv) {
 
     drm_manager_mode_set(&drmm);
     // clear all screens
-  //  for (iter = drmm.dev_list; iter; iter = iter->next)
-  //      clear(iter);
+    //  for (iter = drmm.dev_list; iter; iter = iter->next)
+    //      clear(iter);
 
     // setting up the scene
     scene_init(&scene, 10);
     Vec s1_pos = {.x = 900, .y = 100, .z = 100};
-    Vec s2_pos = {.x = 100, .y = 300, .z = 200};
+    Vec s2_pos = {.x = 100, .y = 300, .z = 400};
     Vec s3_pos = {.x = 700, .y = 500, .z = 100};
 
     Vec floor_pos = {.x = 0, .y = 800, .z = 0};
     Vec floor_normal = {.x = 0, .y = 1, .z = 0};
-    Color floor_color = {.r = 0.4, .g = 0.4, .b = 0.4 };
+    Color floor_color = {.r = 0.4, .g = 0.4, .b = 0.4};
 
     Object *sphere_red = sphere_create(&s1_pos, 200.0, &red);
     Object *sphere_green = sphere_create(&s2_pos, 200.0, &green);
     Object *sphere_blue = sphere_create(&s3_pos, 200.0, &blue);
     Object *floor = plane_create(&floor_pos, &floor_normal, &floor_color);
-    
+
     Surface surface;
     surface.type = Reflective;
     surface.reflectivity = 0.5;
@@ -69,11 +69,24 @@ int main(int argc, const char **argv) {
     scene_add_object(&scene, sphere_blue);
     scene_add_object(&scene, floor);
 
-    Vec sun_direction = { .x = 1.0, .y = 1.0, .z = 1.0 };
-    Sunlight sunlight = { .direction = sun_direction, .intensity = 1.0 };
+    Vec sun_direction = {.x = 1.0, .y = 1.0, .z = 1.0};
+    Sunlight sunlight = {.direction = sun_direction, .intensity = 1.0};
     scene.sunlight = sunlight;
 
+    Point light1_pos = {.x = 100, .y = 250, .z = -10};
+    Spotlight light1 = {.position = light1_pos, .intensity = 5000000};
+    light1.color.r = 1.0;
+    light1.color.g = 1.0;
+    light1.color.b = 1.0;
 
+    Point light2_pos = {.x = 700, .y = 500, .z = -250};
+    Spotlight light2 = {.position = light2_pos, .intensity = 5000000};
+    light2.color.r = 1.0;
+    light2.color.g = 1.0;
+    light2.color.b = 1.0;
+
+    scene_add_spotlight(&scene, &light2);
+    scene_add_spotlight(&scene, &light1);
     // render scene
     for (iter = drmm.dev_list; iter; iter = iter->next) {
         render(&scene, iter);

@@ -11,8 +11,9 @@ typedef struct Scene {
     size_t size;
 
     Object **objects;
-    Sunlight sunlight;
 
+    Sunlight sunlight;
+    Spotlight_list *spotlights;
 } Scene;
 
 void scene_init(Scene *scene, size_t capacity);
@@ -24,3 +25,5 @@ Color cast_ray(Scene *scene,  Ray *ray, uint8_t depth);
 
 Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth);
 Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i);
+
+int scene_add_spotlight(Scene *scene, Spotlight *l);

@@ -3,6 +3,7 @@
 #include "draw.h"
 #include "object.h"
 #include "sphere.h"
+#include "vector.h"
 #include <math.h>
 
 #define EPS 0.01
@@ -11,6 +12,8 @@ void scene_init(Scene *scene, size_t capacity) {
     scene->objects = malloc(sizeof(Object *) * capacity);
     scene->capacity = capacity;
     scene->size = 0;
+
+    scene->spotlights = NULL;
 }
 
 int scene_add_object(Scene *scene, Object *obj) {
@@ -20,6 +23,24 @@ int scene_add_object(Scene *scene, Object *obj) {
     scene->objects[scene->size] = obj;
     scene->size++;
 
+    return 0;
+}
+
+int scene_add_spotlight(Scene *scene, Spotlight *light) {
+    if (scene->spotlights == NULL) {
+        scene->spotlights = malloc(sizeof(struct Spotlight_list));
+        scene->spotlights->light = *light;
+        scene->spotlights->next = NULL;
+        return 0;
+    }
+
+    Spotlight_list *iter = scene->spotlights;
+    while (iter->next != NULL)
+        iter = iter->next;
+
+    iter->next = malloc(sizeof(struct Spotlight_list));
+    iter->next->light = *light;
+    iter->next->next = NULL;
     return 0;
 }
 
@@ -87,14 +108,18 @@ Color cast_ray(Scene *scene, Ray *ray, uint8_t depth) {
 
 Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
-    Vec dir_to_light = v_neg(&scene->sunlight.direction);
-    float light_intensity;
-    float light_power;
 
     Point hit_point = v_mul_s(&ray->direction, i->distance);
     hit_point = v_add(&ray->origin, &hit_point);
     Vec normal = surface_normal(i->object, &hit_point);
     Vec offset = v_mul_s(&normal, EPS);
+
+    // Sunlight
+    Vec dir_to_light = v_neg(&scene->sunlight.direction);
+    float light_intensity;
+    float light_power;
+    Color light_color;
+
     Ray shadow_ray = {.origin = v_add(&hit_point, &offset),
                       .direction = dir_to_light};
 
@@ -108,6 +133,31 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     light_power = v_dot(&normal, &dir_to_light) * light_intensity;
     c = c_add(&c, &i->object->color);
     c = c_mul_s(&c, light_power);
+
+    // Spotlights
+    Spotlight_list *iter = scene->spotlights;
+    while (iter) {
+        Spotlight *spotlight = &iter->light;
+        dir_to_light = v_sub(&spotlight->position, &hit_point);
+        dir_to_light = v_normalize(&dir_to_light);
+        shadow_ray.direction = dir_to_light;
+        shadow_intersect = trace_ray(scene, &shadow_ray);
+        in_light = (shadow_intersect.object == NULL);
+        if (in_light) {
+            Vec distance_vector = v_sub(&spotlight->position, &hit_point);
+            float r2 = v_len2(&distance_vector);
+            light_intensity = spotlight->intensity / (4.0 * 3.141592653 * r2);
+        } else {
+            light_intensity = 0.0;
+        }
+
+        light_power = v_dot(&normal, &dir_to_light) * light_intensity * 0.5;
+        light_color = c_mul_s(&spotlight->color, light_power);
+        light_color = c_mul(&i->object->color, &light_color);
+        c = c_add(&c, &light_color);
+
+        iter = iter->next;
+    }
     return c;
 }
 
@@ -141,7 +191,7 @@ void render(Scene *scene, struct drm_dev *dev) {
             Vec direction = v_sub(&target, &origin);
             direction = v_normalize(&direction);
             Ray ray = {origin, direction};
-            Color c = {.r = 0.1, .g = 0.5, .b = 0.4};
+            Color c = {.r = 0.1, .g = 0.6, .b = 0.7};
             Intersection intersection = trace_ray(scene, &ray);
             if (intersection.object != NULL) {
                 c = cast_ray(scene, &ray, 0);
