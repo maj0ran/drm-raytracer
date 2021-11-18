@@ -56,6 +56,39 @@ static Ray create_reflection(Ray *ray, Point *hit_point, Vec *surface_normal) {
                        .direction = reflect_direction};
     return reflect_ray;
 }
+
+static bool create_transmission(Ray *ray, Point *hit_point, Vec *surface_normal,
+                                float index, Ray *transmission_ray) {
+    Vec n = *surface_normal;
+    float eta_t = index;
+    float eta_i = 1.0;
+    float i_dot_n = v_dot(&ray->direction, surface_normal);
+    if (i_dot_n < 0.0) {
+        // outside the surface
+        i_dot_n = -i_dot_n;
+    } else {
+        n = v_neg(surface_normal);
+        eta_t = 1.0;
+        eta_i = index;
+    }
+
+    float eta = eta_i / eta_t;
+    float k = 1.0 - (eta * eta) * (1.0 - i_dot_n * i_dot_n);
+    if (k < 0.0) {
+        return false;
+    } else {
+        Vec offset = v_mul_s(&n, -EPS);
+        transmission_ray->origin = v_add(hit_point, &offset);
+
+        Vec direction = v_mul_s(&n, i_dot_n);
+        direction = v_add(&ray->direction, &direction);
+        direction = v_mul_s(&direction, eta);
+        n = v_mul_s(&n, sqrtf(k));
+        direction = v_sub(&direction, &n);
+        transmission_ray->direction = direction;
+        return true;
+    }
+}
 void set_sunlight(Scene *scene, Vec *sun_direction, float sun_intensity) {
     scene->sunlight.direction = *sun_direction;
     scene->sunlight.intensity = sun_intensity;
@@ -64,8 +97,9 @@ void set_sunlight(Scene *scene, Vec *sun_direction, float sun_intensity) {
 Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
     Point hit_point = v_mul_s(&ray->direction, i->distance);
     hit_point = v_add(&ray->origin, &hit_point);
-    Color c;
     SurfaceType surface_type = i->object->surface.type;
+    Vec normal = surface_normal(i->object, &hit_point);
+    Color c;
 
     switch (surface_type) {
     case Diffuse:
@@ -74,7 +108,6 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
     case Reflective:
         c = shadow_diffuse(scene, ray, i);
         float reflectivity = i->object->surface.reflectivity;
-        Vec normal = surface_normal(i->object, &hit_point);
         Ray reflection_ray = create_reflection(ray, &hit_point, &normal);
 
         c = c_mul_s(&c, reflectivity);
@@ -82,8 +115,34 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
         i_reflection = c_mul_s(&i_reflection, reflectivity);
         c = c_add(&c, &i_reflection);
         break;
-    case Refractive:
-        break;
+    case Refractive: {
+        Color refraction_color = {.r = 0.0, .g = 0.0, .b = 0.0};
+        float index = i->object->surface.index;
+        Color surface_color = i->object->color;
+
+        float kr = fresnel(scene, ray, &normal, index);
+        if (kr < 1.0) {
+            Ray transmission_ray;
+            create_transmission(ray, &hit_point, &normal, index,
+                                &transmission_ray);
+            refraction_color = cast_ray(scene, &transmission_ray, depth + 1);
+        }
+        Ray reflection_ray = create_reflection(ray, &hit_point, &normal);
+        Color reflection_color = cast_ray(scene, &reflection_ray, depth + 1);
+        reflection_color = c_mul_s(&reflection_color, kr);
+        refraction_color = c_mul_s(&refraction_color, 1.0 - kr);
+   //     printf("R: %f %f %f\n", refraction_color.r, refraction_color.g,
+   //            refraction_color.b);
+   //     printf("L: %f %f %f\n", reflection_color.r, reflection_color.g,
+   //            reflection_color.b);
+   //     printf("S: %f %f %f\n", surface_color.r, surface_color.g,
+    //           surface_color.b);
+        c = c_add(&reflection_color, &refraction_color);
+        c = c_mul(&c, &surface_color);
+        c = c_mul_s(&c, i->object->surface.transparency);
+        //            c = c_mul_s(&c, i->object->surface.transparency);
+   //     printf("FINAL C: %f %f %f\n", c.r, c.g, c.b);
+    } break;
     }
 
     clamp(&c);
@@ -159,6 +218,32 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
         iter = iter->next;
     }
     return c;
+}
+
+float fresnel(Scene *scene, Ray *ray, Vec *surface_normal, float index) {
+    Vec incident = v_normalize(&ray->direction);
+    Vec n = v_normalize(surface_normal);
+    float i_dot_n = v_dot(&incident, &n);
+    float eta_i = 1.0;
+    float eta_t = index;
+    if (i_dot_n > 0.0) {
+        eta_i = eta_t;
+        eta_t = 1.0;
+    }
+
+    float sin_t = eta_i / eta_t * sqrtf(fmaxf((1.0 - i_dot_n * i_dot_n), 0.0));
+    if (sin_t > 1.0) {
+        // Total internal reflection
+        return 1.0;
+    } else {
+        float cos_t = sqrtf(fmaxf(1.0 - sin_t * sin_t, 0.0));
+        float cos_i = fabsf(cos_t);
+        float r_s = ((eta_t * cos_i) - (eta_i * cos_t)) /
+                    ((eta_t * cos_i) + (eta_i * cos_t));
+        float r_p = ((eta_i * cos_i) - (eta_t * cos_t)) /
+                    ((eta_i * cos_i) + (eta_t * cos_t));
+        return (r_s * r_s + r_p * r_p) / 2.0;
+    }
 }
 
 Intersection trace_ray(Scene *scene, Ray *ray) {

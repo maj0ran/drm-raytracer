@@ -27,3 +27,4 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth);
 Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i);
 
 int scene_add_spotlight(Scene *scene, Spotlight *l);
+float fresnel(Scene *scene, Ray *ray, Vec *surface_normal, float index);

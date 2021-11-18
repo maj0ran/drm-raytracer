@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-Color red = {.r = 1.0, .g = 0, .b = 0};
-Color green = {.r = 0, .g = 1.0, .b = 0};
-Color blue = {.r = 0, .g = 0, .b = 1.0};
+Color red = {.r = 1.0, .g = 0.4, .b = 0.1};
+Color green = {.r = 0.2, .g = 1.0, .b = 0.2};
+Color blue = {.r = 0.3, .g = 0.7, .b = 1.0};
 
 int main(int argc, const char **argv) {
     struct drm_manager drmm;
@@ -43,8 +43,8 @@ int main(int argc, const char **argv) {
 
     // setting up the scene
     scene_init(&scene, 10);
-    Vec s1_pos = {.x = 900, .y = 100, .z = 100};
-    Vec s2_pos = {.x = 100, .y = 300, .z = 400};
+    Vec s1_pos = {.x = 900, .y = 100, .z = 400};
+    Vec s2_pos = {.x = 600, .y = 300, .z = 400};
     Vec s3_pos = {.x = 700, .y = 500, .z = 100};
 
     Vec floor_pos = {.x = 0, .y = 800, .z = 0};
@@ -56,13 +56,19 @@ int main(int argc, const char **argv) {
     Object *sphere_blue = sphere_create(&s3_pos, 200.0, &blue);
     Object *floor = plane_create(&floor_pos, &floor_normal, &floor_color);
 
-    Surface surface;
-    surface.type = Reflective;
-    surface.reflectivity = 0.5;
-    sphere_red->surface = surface;
-    sphere_green->surface = surface;
-    sphere_blue->surface = surface;
-    floor->surface = surface;
+    Surface surface_refractive;
+    surface_refractive.type = Refractive;
+    surface_refractive.index = 1.15;
+    surface_refractive.transparency = 1.0;
+
+    Surface surface_reflective;
+    surface_reflective.type = Reflective;
+    surface_reflective.reflectivity = 0.5;
+
+    sphere_red->surface = surface_reflective;
+    sphere_green->surface = surface_reflective;
+    sphere_blue->surface = surface_refractive;
+    floor->surface = surface_reflective;
 
     scene_add_object(&scene, sphere_red);
     scene_add_object(&scene, sphere_green);

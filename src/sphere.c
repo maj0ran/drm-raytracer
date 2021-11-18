@@ -13,7 +13,7 @@ bool sphere_intersect(struct Object *o, Ray *ray, float *intersect) {
     Sphere *s = (Sphere *)o;
     Vec hypotenuse = v_sub(&s->center, &ray->origin);
     float adj_len2 = v_dot(&hypotenuse, &ray->direction);
-    float opp_len2 = v_len2(&hypotenuse) - adj_len2 * adj_len2;
+    float opp_len2 = v_dot(&hypotenuse, &hypotenuse) - adj_len2 * adj_len2;
     float radius2 = s->radius * s->radius;
 
     if (opp_len2 > radius2) {
