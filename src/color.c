@@ -1,4 +1,5 @@
 #include "color.h"
+#include <stdlib.h>
 
 Color c_add(Color *c1, Color *c2) {
     Color result = {
@@ -50,4 +51,18 @@ void clamp(Color *c) {
         c->g = 1.0;
     if (c->b > 1.0)
         c->b = 1.0;
+}
+
+Color generate_random_color() {
+    Color c;
+    c.r = (float)random() / (float)RAND_MAX;
+    c.g = (float)random() / (float)RAND_MAX;
+    c.b = (float)random() / (float)RAND_MAX;
+    // disable pure dark and make them generally brighter
+    c.r += 0.1;
+    c.g += 0.1;
+    c.b += 0.1;
+    clamp(&c);
+
+    return c;
 }

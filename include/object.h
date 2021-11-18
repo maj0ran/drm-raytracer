@@ -21,23 +21,23 @@ typedef struct _Surface {
     };
 } Surface;
 
-typedef struct Object {
-    const struct ObjectInterface *const vtable;
+typedef struct Element {
+    const struct ElementInterface *const vtable;
     Color color;
     Surface surface;
-} Object;
+} Element;
 
-typedef struct ObjectInterface {
-    const char *(*print)(struct Object *o);
-    bool (*intersect)(struct Object *o, Ray *ray, float *intersect);
-    Vec (*surface_normal)(struct Object *o, Point *hit_point);
-} ObjectInterface;
+typedef struct ElementInterface {
+    const char *(*print)(struct Element *o);
+    bool (*intersect)(struct Element *o, Ray *ray, float *intersect);
+    Vec (*surface_normal)(struct Element *o, Point *hit_point);
+} ElementInterface;
 
-const char *print(struct Object *o);
-bool intersect(struct Object *o, Ray *ray, float *intersect);
-Vec surface_normal(struct Object *o, Point *hit_point);
+const char *print(struct Element *o);
+bool intersect(struct Element *o, Ray *ray, float *intersect);
+Vec surface_normal(struct Element *o, Point *hit_point);
 
 typedef struct Intersection {
     float distance;
-    Object *object;
+    Element *object;
 } Intersection;

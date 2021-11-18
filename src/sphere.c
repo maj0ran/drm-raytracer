@@ -5,11 +5,11 @@
 #include <math.h>
 #include <memory.h>
 
-const char *sphere_print(__attribute__((unused)) struct Object *o) {
+const char *sphere_print(__attribute__((unused)) struct Element *o) {
     return "SPHERE";
 }
 
-bool sphere_intersect(struct Object *o, Ray *ray, float *intersect) {
+bool sphere_intersect(struct Element *o, Ray *ray, float *intersect) {
     Sphere *s = (Sphere *)o;
     Vec hypotenuse = v_sub(&s->center, &ray->origin);
     float adj_len2 = v_dot(&hypotenuse, &ray->direction);
@@ -41,24 +41,24 @@ bool sphere_intersect(struct Object *o, Ray *ray, float *intersect) {
     }
 }
 
-Vec sphere_surface_normal(Object *o, Point *hit_point) {
+Vec sphere_surface_normal(Element *o, Point *hit_point) {
     Sphere *s = (Sphere *)o;
 
     Vec normal = v_sub(hit_point, &s->center);
     return v_normalize(&normal);
 }
 
-struct Object *sphere_create(Vec *position, float radius, Color *color) {
-    static const ObjectInterface vtable = {.print = sphere_print,
+struct Element *sphere_create(Vec *position, float radius, Color *color) {
+    static const ElementInterface vtable = {.print = sphere_print,
                                            .intersect = sphere_intersect,
                                            .surface_normal =
                                                sphere_surface_normal};
 
-    static Object base = {.vtable = &vtable};
+    static Element base = {.vtable = &vtable};
     base.color = *color;
 
     Sphere *sphere = malloc(sizeof(*sphere));
-    memcpy(&sphere->base, &base, sizeof(struct Object));
+    memcpy(&sphere->base, &base, sizeof(struct Element));
 
     sphere->center = *position;
     sphere->radius = radius;

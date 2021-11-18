@@ -1,3 +1,4 @@
+#include "color.h"
 #include "draw.h"
 #include "drm_helper.h"
 #include "object.h"
@@ -12,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <signal.h>
 
@@ -27,6 +29,9 @@ Color blue = {.r = 0.3, .g = 0.7, .b = 1.0};
 
 int main(int argc, const char **argv) {
     signal(SIGINT, intHandler);
+
+    time_t seed = time(NULL);
+    srand(seed);
     struct drm_dev *iter;
     int dri_fd;
     int ret;
@@ -58,15 +63,17 @@ int main(int argc, const char **argv) {
     Vec floor_pos = {.x = 0, .y = 800, .z = 0};
     Vec floor_normal = {.x = 0, .y = 1, .z = 0};
     Color floor_color = {.r = 0.4, .g = 0.4, .b = 0.4};
-
-    Object *sphere_red = sphere_create(&s1_pos, 200.0, &red);
-    Object *sphere_green = sphere_create(&s2_pos, 200.0, &green);
-    Object *sphere_blue = sphere_create(&s3_pos, 200.0, &blue);
-    Object *floor = plane_create(&floor_pos, &floor_normal, &floor_color);
+    Color sphere_color = generate_random_color();
+    Element *sphere_red = sphere_create(&s1_pos, 200.0, &sphere_color);
+    sphere_color = generate_random_color();
+    Element *sphere_green = sphere_create(&s2_pos, 200.0, &sphere_color);
+    sphere_color = generate_random_color();
+    Element *sphere_blue = sphere_create(&s3_pos, 200.0, &sphere_color);
+    Element *floor = plane_create(&floor_pos, &floor_normal, &floor_color);
 
     Surface surface_refractive;
     surface_refractive.type = Refractive;
-    surface_refractive.index = 1.15;
+    surface_refractive.index = 1.03;
     surface_refractive.transparency = 1.0;
 
     Surface surface_reflective;

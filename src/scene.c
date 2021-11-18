@@ -9,14 +9,14 @@
 #define EPS 0.01
 
 void scene_init(Scene *scene, size_t capacity) {
-    scene->objects = malloc(sizeof(Object *) * capacity);
+    scene->objects = malloc(sizeof(Element *) * capacity);
     scene->capacity = capacity;
     scene->size = 0;
 
     scene->spotlights = NULL;
 }
 
-int scene_add_object(Scene *scene, Object *obj) {
+int scene_add_object(Scene *scene, Element *obj) {
     if (scene->size == scene->capacity)
         return -1;
 
@@ -120,7 +120,7 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
         float index = i->object->surface.index;
         Color surface_color = i->object->color;
 
-        float kr = fresnel(scene, ray, &normal, index);
+        float kr = fresnel(ray, &normal, index);
         if (kr < 1.0) {
             Ray transmission_ray;
             create_transmission(ray, &hit_point, &normal, index,
@@ -131,17 +131,9 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
         Color reflection_color = cast_ray(scene, &reflection_ray, depth + 1);
         reflection_color = c_mul_s(&reflection_color, kr);
         refraction_color = c_mul_s(&refraction_color, 1.0 - kr);
-        //     printf("R: %f %f %f\n", refraction_color.r, refraction_color.g,
-        //            refraction_color.b);
-        //     printf("L: %f %f %f\n", reflection_color.r, reflection_color.g,
-        //            reflection_color.b);
-        //     printf("S: %f %f %f\n", surface_color.r, surface_color.g,
-        //           surface_color.b);
         c = c_add(&reflection_color, &refraction_color);
         c = c_mul(&c, &surface_color);
         c = c_mul_s(&c, i->object->surface.transparency);
-        //            c = c_mul_s(&c, i->object->surface.transparency);
-        //     printf("FINAL C: %f %f %f\n", c.r, c.g, c.b);
     } break;
     }
 
@@ -220,7 +212,7 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     return c;
 }
 
-float fresnel(Scene *scene, Ray *ray, Vec *surface_normal, float index) {
+float fresnel(Ray *ray, Vec *surface_normal, float index) {
     Vec incident = v_normalize(&ray->direction);
     Vec n = v_normalize(surface_normal);
     float i_dot_n = v_dot(&incident, &n);
@@ -249,10 +241,10 @@ float fresnel(Scene *scene, Ray *ray, Vec *surface_normal, float index) {
 Intersection trace_ray(Scene *scene, Ray *ray) {
     float distance;
     float nearest_intersection = INFINITY;
-    Object *nearest_object = NULL;
+    Element *nearest_object = NULL;
     Intersection i;
     for (size_t obj = 0; obj < scene->size; obj++) {
-        Object *o = scene->objects[obj];
+        Element *o = scene->objects[obj];
         if (intersect(o, ray, &distance)) {
             if (distance < nearest_intersection) {
                 nearest_intersection = distance;
@@ -276,7 +268,7 @@ void render(Scene *scene, struct drm_dev *dev) {
             Vec direction = v_sub(&target, &origin);
             direction = v_normalize(&direction);
             Ray ray = {origin, direction};
-            Color c = {.r = 0.1, .g = 0.6, .b = 0.7};
+            Color c = {.r = 0.1, .g = 0.6, .b = 0.8};
             Intersection intersection = trace_ray(scene, &ray);
             if (intersection.object != NULL) {
                 c = cast_ray(scene, &ray, 0);
