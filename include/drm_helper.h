@@ -26,7 +26,7 @@ struct drm_buf {
     uint32_t size;
     uint32_t pitch;
     uint32_t handle;
-    uint8_t  *map;
+    uint8_t *map;
 };
 
 struct drm_dev {

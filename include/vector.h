@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 typedef struct Vec {
-  float x, y, z;
+    float x, y, z;
 } Vec;
 
 typedef Vec Point;

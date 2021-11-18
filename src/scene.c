@@ -131,17 +131,17 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
         Color reflection_color = cast_ray(scene, &reflection_ray, depth + 1);
         reflection_color = c_mul_s(&reflection_color, kr);
         refraction_color = c_mul_s(&refraction_color, 1.0 - kr);
-   //     printf("R: %f %f %f\n", refraction_color.r, refraction_color.g,
-   //            refraction_color.b);
-   //     printf("L: %f %f %f\n", reflection_color.r, reflection_color.g,
-   //            reflection_color.b);
-   //     printf("S: %f %f %f\n", surface_color.r, surface_color.g,
-    //           surface_color.b);
+        //     printf("R: %f %f %f\n", refraction_color.r, refraction_color.g,
+        //            refraction_color.b);
+        //     printf("L: %f %f %f\n", reflection_color.r, reflection_color.g,
+        //            reflection_color.b);
+        //     printf("S: %f %f %f\n", surface_color.r, surface_color.g,
+        //           surface_color.b);
         c = c_add(&reflection_color, &refraction_color);
         c = c_mul(&c, &surface_color);
         c = c_mul_s(&c, i->object->surface.transparency);
         //            c = c_mul_s(&c, i->object->surface.transparency);
-   //     printf("FINAL C: %f %f %f\n", c.r, c.g, c.b);
+        //     printf("FINAL C: %f %f %f\n", c.r, c.g, c.b);
     } break;
     }
 

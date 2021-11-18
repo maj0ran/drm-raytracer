@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 typedef struct {
-  float r, g, b;
+    float r, g, b;
 } Color;
 
 Color c_add(Color *c1, Color *c2);

@@ -51,7 +51,8 @@ Vec sphere_surface_normal(Object *o, Point *hit_point) {
 struct Object *sphere_create(Vec *position, float radius, Color *color) {
     static const ObjectInterface vtable = {.print = sphere_print,
                                            .intersect = sphere_intersect,
-                                           .surface_normal = sphere_surface_normal};
+                                           .surface_normal =
+                                               sphere_surface_normal};
 
     static Object base = {.vtable = &vtable};
     base.color = *color;
@@ -59,7 +60,6 @@ struct Object *sphere_create(Vec *position, float radius, Color *color) {
     Sphere *sphere = malloc(sizeof(*sphere));
     memcpy(&sphere->base, &base, sizeof(struct Object));
 
-//    sphere->base.color = *color;
     sphere->center = *position;
     sphere->radius = radius;
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "vector.h"
 #include "color.h"
+#include "vector.h"
 
 typedef struct Sunlight {
     Vec direction;

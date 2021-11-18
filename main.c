@@ -10,14 +10,23 @@
 #include <errno.h>
 #include <float.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
+#include <signal.h>
+
+struct drm_manager drmm;
+
+void intHandler(__attribute__((unused)) int signo) {
+    drm_manager_cleanup(&drmm);
+    exit(0);
+}
 Color red = {.r = 1.0, .g = 0.4, .b = 0.1};
 Color green = {.r = 0.2, .g = 1.0, .b = 0.2};
 Color blue = {.r = 0.3, .g = 0.7, .b = 1.0};
 
 int main(int argc, const char **argv) {
-    struct drm_manager drmm;
+    signal(SIGINT, intHandler);
     struct drm_dev *iter;
     int dri_fd;
     int ret;
@@ -37,9 +46,8 @@ int main(int argc, const char **argv) {
         return -1;
 
     drm_manager_mode_set(&drmm);
-    // clear all screens
-    //  for (iter = drmm.dev_list; iter; iter = iter->next)
-    //      clear(iter);
+    for (iter = drmm.dev_list; iter; iter = iter->next)
+        clear(iter);
 
     // setting up the scene
     scene_init(&scene, 10);
@@ -98,8 +106,7 @@ int main(int argc, const char **argv) {
         render(&scene, iter);
     }
 
-    sleep(2);
-
+    sleep(5);
     drm_manager_cleanup(&drmm);
     return 0;
 }

@@ -22,15 +22,15 @@ typedef struct _Surface {
 } Surface;
 
 typedef struct Object {
-  const struct ObjectInterface *const vtable;
-  Color color;
-  Surface surface;
+    const struct ObjectInterface *const vtable;
+    Color color;
+    Surface surface;
 } Object;
 
 typedef struct ObjectInterface {
-  const char *(*print)(struct Object *o);
-  bool (*intersect)(struct Object *o, Ray *ray, float *intersect);
-  Vec (*surface_normal)(struct Object *o, Point *hit_point);
+    const char *(*print)(struct Object *o);
+    bool (*intersect)(struct Object *o, Ray *ray, float *intersect);
+    Vec (*surface_normal)(struct Object *o, Point *hit_point);
 } ObjectInterface;
 
 const char *print(struct Object *o);
