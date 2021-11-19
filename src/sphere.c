@@ -48,11 +48,29 @@ Vec sphere_surface_normal(Element *o, Point *hit_point) {
     return v_normalize(&normal);
 }
 
+TextureCoords sphere_texture_coords(Element *o, Point *hit_point) {
+    Sphere *s = (Sphere *)o;
+
+    TextureCoords coords;
+    Vec hit_vec = v_sub(hit_point, &s->center);
+    
+    double x = (1.0 + atan2(hit_vec.z, hit_vec.x) / M_PI) * 0.5;
+
+    double y = fabs(acos(hit_vec.y / s->radius) / M_PI);
+
+    coords.x = x * o->texture.width;
+    coords.y = y * o->texture.height;
+    printf("%lu %lu\n", coords.x, coords.y);
+    return coords;
+}
+
 struct Element *sphere_create(Vec *position, float radius, Color *color) {
-    static const ElementInterface vtable = {.print = sphere_print,
-                                           .intersect = sphere_intersect,
-                                           .surface_normal =
-                                               sphere_surface_normal};
+    static const ElementInterface vtable = {
+        .print = sphere_print,
+        .intersect = sphere_intersect,
+        .surface_normal = sphere_surface_normal,
+        .texture_coords = sphere_texture_coords,
+    };
 
     static Element base = {.vtable = &vtable};
     base.color = *color;

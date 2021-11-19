@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct Vec {
@@ -19,3 +20,5 @@ float v_len2(Vec *v);
 float v_len(Vec *v);
 float v_dot(Vec *v1, Vec *v2);
 Vec v_normalize(Vec *v);
+Vec v_cross(Vec *a, Vec *b);
+bool is_equal(Vec *a, Vec *b);

@@ -52,6 +52,7 @@ static Ray create_reflection(Ray *ray, Point *hit_point, Vec *surface_normal) {
     Vec reflect_direction =
         v_mul_s(surface_normal, v_dot(&ray->direction, surface_normal) * 2.0);
     reflect_direction = v_sub(&ray->direction, &reflect_direction);
+    reflect_direction = v_normalize(&reflect_direction);
     Ray reflect_ray = {.origin = reflect_origin,
                        .direction = reflect_direction};
     return reflect_ray;
@@ -85,6 +86,7 @@ static bool create_transmission(Ray *ray, Point *hit_point, Vec *surface_normal,
         direction = v_mul_s(&direction, eta);
         n = v_mul_s(&n, sqrtf(k));
         direction = v_sub(&direction, &n);
+        direction = v_normalize(&direction);
         transmission_ray->direction = direction;
         return true;
     }
@@ -157,6 +159,11 @@ Color cast_ray(Scene *scene, Ray *ray, uint8_t depth) {
     return c;
 }
 
+void wrap(const Texture *tex, TextureCoords *coords) {
+    coords->x %= tex->width;
+    coords->y %= tex->height;
+}
+
 Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
 
@@ -167,6 +174,7 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
 
     // Sunlight
     Vec dir_to_light = v_neg(&scene->sunlight.direction);
+    dir_to_light = v_normalize(&dir_to_light);
     float light_intensity;
     float light_power;
     Color light_color;
@@ -181,8 +189,17 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     } else {
         light_intensity = 0.0;
     }
-    light_power = v_dot(&normal, &dir_to_light) * light_intensity;
-    c = c_add(&c, &i->object->color);
+    light_power = fmax(v_dot(&normal, &dir_to_light), 0.0) * light_intensity;
+    Color *surface_color;
+    if (i->object->is_textured) {
+        Texture *tex = &i->object->texture;
+        TextureCoords coords = texture_coords(i->object, &hit_point);
+        wrap(tex, &coords);
+        surface_color = tex->data + (tex->width * coords.y + coords.x);
+    } else {
+        surface_color = &i->object->color;
+    }
+    c = c_add(&c, surface_color);
     c = c_mul_s(&c, light_power);
 
     // Spotlights
@@ -191,7 +208,10 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
         Spotlight *spotlight = &iter->light;
         dir_to_light = v_sub(&spotlight->position, &hit_point);
         dir_to_light = v_normalize(&dir_to_light);
+        shadow_ray.origin = v_mul_s(&normal, EPS);
+        shadow_ray.origin = v_add(&hit_point, &shadow_ray.origin);
         shadow_ray.direction = dir_to_light;
+
         shadow_intersect = trace_ray(scene, &shadow_ray);
         in_light = (shadow_intersect.object == NULL);
         if (in_light) {
@@ -268,6 +288,7 @@ void render(Scene *scene, struct drm_dev *dev) {
             Vec direction = v_sub(&target, &origin);
             direction = v_normalize(&direction);
             Ray ray = {origin, direction};
+
             Color c = {.r = 0.1, .g = 0.6, .b = 0.8};
             Intersection intersection = trace_ray(scene, &ray);
             if (intersection.object != NULL) {

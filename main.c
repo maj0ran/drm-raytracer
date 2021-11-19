@@ -56,12 +56,14 @@ int main(int argc, const char **argv) {
 
     // setting up the scene
     scene_init(&scene, 10);
-    Vec s1_pos = {.x = 900, .y = 100, .z = 400};
-    Vec s2_pos = {.x = 600, .y = 300, .z = 400};
-    Vec s3_pos = {.x = 700, .y = 500, .z = 100};
+    Vec s1_pos = {.x = 1400, .y = 600, .z = 500};
+    Vec s2_pos = {.x = 200, .y = 800, .z = 500};
+    Vec s3_pos = {.x = 800, .y = 900, .z = 600};
 
-    Vec floor_pos = {.x = 0, .y = 800, .z = 0};
-    Vec floor_normal = {.x = 0, .y = 1, .z = 0};
+    Vec floor_pos = {.x = 0, .y = 1200, .z = 0};
+    Vec floor_normal = {.x = 0, .y = 1, .z = 0.1};
+    Vec ceiling_pos = {.x = 0, .y = 1000, .z = 0};
+    Vec ceiling_normal = {.x = 0, .y = 1, .z = 1};
     Color floor_color = {.r = 0.4, .g = 0.4, .b = 0.4};
     Color sphere_color = generate_random_color();
     Element *sphere_red = sphere_create(&s1_pos, 200.0, &sphere_color);
@@ -70,15 +72,17 @@ int main(int argc, const char **argv) {
     sphere_color = generate_random_color();
     Element *sphere_blue = sphere_create(&s3_pos, 200.0, &sphere_color);
     Element *floor = plane_create(&floor_pos, &floor_normal, &floor_color);
-
+    
+    Texture tex = gen_checkboard_texture(256);
+    set_texture(floor, tex);
     Surface surface_refractive;
     surface_refractive.type = Refractive;
-    surface_refractive.index = 1.03;
+    surface_refractive.index = 1.8;
     surface_refractive.transparency = 1.0;
 
     Surface surface_reflective;
     surface_reflective.type = Reflective;
-    surface_reflective.reflectivity = 0.5;
+    surface_reflective.reflectivity = 0.9;
 
     sphere_red->surface = surface_reflective;
     sphere_green->surface = surface_reflective;
@@ -90,11 +94,11 @@ int main(int argc, const char **argv) {
     scene_add_object(&scene, sphere_blue);
     scene_add_object(&scene, floor);
 
-    Vec sun_direction = {.x = 1.0, .y = 1.0, .z = 1.0};
+    Vec sun_direction = {.x = 0, .y = 1.0, .z = 1.0};
     Sunlight sunlight = {.direction = sun_direction, .intensity = 1.0};
     scene.sunlight = sunlight;
 
-    Point light1_pos = {.x = 100, .y = 250, .z = -10};
+    Point light1_pos = {.x = 700, .y = 750, .z = 100};
     Spotlight light1 = {.position = light1_pos, .intensity = 5000000};
     light1.color.r = 1.0;
     light1.color.g = 1.0;
