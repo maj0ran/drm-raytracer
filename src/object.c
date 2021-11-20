@@ -22,4 +22,3 @@ void set_texture(struct Element *o, Texture surface_texture) {
     o->texture = surface_texture;
     o->is_textured = true;
 }
-

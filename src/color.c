@@ -59,9 +59,9 @@ Color generate_random_color() {
     c.g = (float)random() / (float)RAND_MAX;
     c.b = (float)random() / (float)RAND_MAX;
     // disable pure dark and make them generally brighter
-    c.r += 0.1;
-    c.g += 0.1;
-    c.b += 0.1;
+    c.r += 0.3;
+    c.g += 0.2;
+    c.b += 0.3;
     clamp(&c);
 
     return c;

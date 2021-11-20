@@ -19,6 +19,7 @@ src = [ 'main.c',
         'src/scene.c',
         'src/color.c',
         'src/texture.c',
+        'src/light.c',
       ]
 exe = executable('drm_raytracer',
                  src,

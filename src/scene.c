@@ -2,6 +2,7 @@
 #include "color.h"
 #include "draw.h"
 #include "object.h"
+#include "plane.h"
 #include "sphere.h"
 #include "vector.h"
 #include <math.h>
@@ -13,7 +14,52 @@ void scene_init(Scene *scene, size_t capacity) {
     scene->capacity = capacity;
     scene->size = 0;
 
-    scene->spotlights = NULL;
+    scene->lights = NULL;
+
+    Color sphere_color = generate_random_color();
+    Element *sphere_red =
+        sphere_create(&(Vec){.x = 1400, .y = 600, .z = 500}, 200.0, &RED);
+    sphere_color = generate_random_color();
+    Element *sphere_green =
+        sphere_create(&(Vec){.x = 200, .y = 800, .z = 500}, 200.0, &GREEN);
+    sphere_color = generate_random_color();
+    Element *sphere_blue =
+        sphere_create(&(Vec){.x = 800, .y = 500, .z = 200}, 200.0, &BLUE);
+    Element *floor = plane_create(&(Vec){.x = 0, .y = 1600, .z = 1000},
+                                  &(Vec){.x = 0, .y = 0.5, .z = 1.0}, &GREY);
+
+    Texture tex = gen_checkboard_texture(256);
+    set_texture(floor, tex);
+
+    Surface surface_floor = (Surface){.type = Reflective, .reflectivity = 1.0};
+    Surface surface_refractive =
+        (Surface){.type = Refractive, .index = 1.5, .transparency = 1.0};
+    Surface surface_reflective =
+        (Surface){.type = Reflective, .reflectivity = 0.2};
+
+    sphere_red->surface = surface_reflective;
+    sphere_green->surface = surface_reflective;
+    sphere_blue->surface = surface_refractive;
+    floor->surface = surface_floor;
+
+    scene_add_object(scene, sphere_red);
+    scene_add_object(scene, sphere_green);
+    scene_add_object(scene, sphere_blue);
+    scene_add_object(scene, floor);
+
+    Light *sunlight = directional_light_create(
+        (Vec){.x = 0, .y = 1, .z = 1}, (Color){.r = 1, .g = 1, .b = 1}, 0.7);
+
+    Light *point_1 =
+        point_light_create((Vec){.x = 1500, .y = 400, .z = 100},
+                           (Color){.r = 1, .g = 1, .b = 1}, 2000000);
+    Light *point_2 =
+        point_light_create((Vec){.x = 100, .y = 500, .z = 500},
+                           (Color){.r = 1, .g = 1, .b = 1}, 2000000);
+
+    scene_add_light(scene, sunlight);
+    scene_add_light(scene, point_1);
+    scene_add_light(scene, point_2);
 }
 
 int scene_add_object(Scene *scene, Element *obj) {
@@ -26,20 +72,20 @@ int scene_add_object(Scene *scene, Element *obj) {
     return 0;
 }
 
-int scene_add_spotlight(Scene *scene, Spotlight *light) {
-    if (scene->spotlights == NULL) {
-        scene->spotlights = malloc(sizeof(struct Spotlight_list));
-        scene->spotlights->light = *light;
-        scene->spotlights->next = NULL;
+int scene_add_light(Scene *scene, Light *light) {
+    if (scene->lights == NULL) {
+        scene->lights = malloc(sizeof(struct Light_list));
+        scene->lights->light = light;
+        scene->lights->next = NULL;
         return 0;
     }
 
-    Spotlight_list *iter = scene->spotlights;
+    Light_list *iter = scene->lights;
     while (iter->next != NULL)
         iter = iter->next;
 
-    iter->next = malloc(sizeof(struct Spotlight_list));
-    iter->next->light = *light;
+    iter->next = malloc(sizeof(struct Light_list));
+    iter->next->light = light;
     iter->next->next = NULL;
     return 0;
 }
@@ -91,10 +137,6 @@ static bool create_transmission(Ray *ray, Point *hit_point, Vec *surface_normal,
         return true;
     }
 }
-void set_sunlight(Scene *scene, Vec *sun_direction, float sun_intensity) {
-    scene->sunlight.direction = *sun_direction;
-    scene->sunlight.intensity = sun_intensity;
-}
 
 Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
     Point hit_point = v_mul_s(&ray->direction, i->distance);
@@ -118,7 +160,7 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
         c = c_add(&c, &i_reflection);
         break;
     case Refractive: {
-        Color refraction_color = {.r = 0.0, .g = 0.0, .b = 0.0};
+        Color refraction_color = BACKGROUND;
         float index = i->object->surface.index;
         Color surface_color = i->object->color;
 
@@ -146,7 +188,7 @@ Color get_color(Scene *scene, Ray *ray, Intersection *i, uint8_t depth) {
 
 Color cast_ray(Scene *scene, Ray *ray, uint8_t depth) {
     if (depth >= 4) {
-        Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
+        Color c = BACKGROUND;
         return c;
     }
 
@@ -155,7 +197,7 @@ Color cast_ray(Scene *scene, Ray *ray, uint8_t depth) {
         return get_color(scene, ray, &i, depth);
     }
 
-    Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
+    Color c = BACKGROUND;
     return c;
 }
 
@@ -165,31 +207,12 @@ void wrap(const Texture *tex, TextureCoords *coords) {
 }
 
 Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
-    Color c = {.r = 0.0, .g = 0.0, .b = 0.0};
+    Color c = BLACK;
 
     Point hit_point = v_mul_s(&ray->direction, i->distance);
     hit_point = v_add(&ray->origin, &hit_point);
     Vec normal = surface_normal(i->object, &hit_point);
-    Vec offset = v_mul_s(&normal, EPS);
 
-    // Sunlight
-    Vec dir_to_light = v_neg(&scene->sunlight.direction);
-    dir_to_light = v_normalize(&dir_to_light);
-    float light_intensity;
-    float light_power;
-    Color light_color;
-
-    Ray shadow_ray = {.origin = v_add(&hit_point, &offset),
-                      .direction = dir_to_light};
-
-    Intersection shadow_intersect = trace_ray(scene, &shadow_ray);
-    bool in_light = (shadow_intersect.object == NULL);
-    if (in_light) {
-        light_intensity = scene->sunlight.intensity;
-    } else {
-        light_intensity = 0.0;
-    }
-    light_power = fmax(v_dot(&normal, &dir_to_light), 0.0) * light_intensity;
     Color *surface_color;
     if (i->object->is_textured) {
         Texture *tex = &i->object->texture;
@@ -199,34 +222,42 @@ Color shadow_diffuse(Scene *scene, Ray *ray, Intersection *i) {
     } else {
         surface_color = &i->object->color;
     }
-    c = c_add(&c, surface_color);
-    c = c_mul_s(&c, light_power);
 
     // Spotlights
-    Spotlight_list *iter = scene->spotlights;
+    Light_list *iter = scene->lights;
+    Ray shadow_ray;
+    Intersection shadow_intersect;
     while (iter) {
-        Spotlight *spotlight = &iter->light;
-        dir_to_light = v_sub(&spotlight->position, &hit_point);
+        Light *light = iter->light;
+        Vec dir_to_light = direction(light, &hit_point);
+        dir_to_light = v_neg(&dir_to_light);
         dir_to_light = v_normalize(&dir_to_light);
         shadow_ray.origin = v_mul_s(&normal, EPS);
         shadow_ray.origin = v_add(&hit_point, &shadow_ray.origin);
         shadow_ray.direction = dir_to_light;
 
         shadow_intersect = trace_ray(scene, &shadow_ray);
-        in_light = (shadow_intersect.object == NULL);
+
+        bool in_light = (shadow_intersect.object == NULL);
+        float light_intensity;
+        float light_power;
+        Color light_color;
+        if (!in_light) {
+            float light_distance = distance(light, &hit_point);
+            in_light = (shadow_intersect.distance > light_distance);
+        }
         if (in_light) {
-            Vec distance_vector = v_sub(&spotlight->position, &hit_point);
-            float r2 = v_len2(&distance_vector);
-            light_intensity = spotlight->intensity / (4.0 * 3.141592653 * r2);
+            light_intensity = intensity(light, &hit_point);
         } else {
             light_intensity = 0.0;
         }
-
-        light_power = v_dot(&normal, &dir_to_light) * light_intensity * 0.5;
-        light_color = c_mul_s(&spotlight->color, light_power);
-        light_color = c_mul(&i->object->color, &light_color);
+        float light_reflected = i->object->surface.reflectivity;
+        light_power =
+            fmax(v_dot(&normal, &dir_to_light), 0.0) * light_intensity;
+        light_color = c_mul_s(&light->color, light_power);
+        light_color = c_mul_s(&light_color, light_reflected);
+        light_color = c_mul(surface_color, &light_color);
         c = c_add(&c, &light_color);
-
         iter = iter->next;
     }
     return c;
@@ -289,7 +320,7 @@ void render(Scene *scene, struct drm_dev *dev) {
             direction = v_normalize(&direction);
             Ray ray = {origin, direction};
 
-            Color c = {.r = 0.1, .g = 0.6, .b = 0.8};
+            Color c = BACKGROUND;
             Intersection intersection = trace_ray(scene, &ray);
             if (intersection.object != NULL) {
                 c = cast_ray(scene, &ray, 0);

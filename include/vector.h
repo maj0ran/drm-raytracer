@@ -18,6 +18,7 @@ Vec v_sub_s(Vec *v1, float scalar);
 Vec v_neg(Vec *v);
 float v_len2(Vec *v);
 float v_len(Vec *v);
+float v_dist(Vec *a, Vec *b);
 float v_dot(Vec *v1, Vec *v2);
 Vec v_normalize(Vec *v);
 Vec v_cross(Vec *a, Vec *b);
