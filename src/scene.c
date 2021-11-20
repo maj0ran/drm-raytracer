@@ -1,9 +1,6 @@
 #include "scene.h"
 #include "color.h"
 #include "draw.h"
-#include "object.h"
-#include "plane.h"
-#include "sphere.h"
 #include "vector.h"
 #include <math.h>
 

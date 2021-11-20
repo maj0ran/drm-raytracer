@@ -1,12 +1,10 @@
 #include "color.h"
 #include "draw.h"
 #include "drm_helper.h"
+#include "elements.h"
 #include "light.h"
-#include "object.h"
-#include "plane.h"
 #include "ray.h"
 #include "scene.h"
-#include "sphere.h"
 #include "vector.h"
 #include <EGL/egl.h>
 #include <GLES/gl.h>

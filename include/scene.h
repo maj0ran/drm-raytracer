@@ -1,8 +1,8 @@
 #pragma once
 
 #include "drm_helper.h"
+#include "elements.h"
 #include "light.h"
-#include "object.h"
 #include <malloc.h>
 #include <stddef.h>
 

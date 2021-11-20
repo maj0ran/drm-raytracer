@@ -10,9 +10,7 @@ libdrm = dependency('libdrm')
 m_dep = cc.find_library('m', required : false)
 
 src = [ 'main.c', 
-        'src/object.c',
-        'src/sphere.c',
-        'src/plane.c',
+        'src/elements.c',
         'src/vector.c',
         'src/drm_helper.c',
         'src/draw.c',
