@@ -26,8 +26,6 @@ void sigint_handler(__attribute__((unused)) int signo) {
 int main(int argc, const char **argv) {
     signal(SIGINT, sigint_handler);
 
-    time_t seed = time(NULL);
-    srand(seed);
     struct drm_dev *iter;
     int dri_fd;
     int ret;
