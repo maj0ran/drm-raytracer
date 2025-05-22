@@ -27,6 +27,8 @@ Color generate_random_color();
     (Color) { .r = 0.0, .g = 0.0, .b = 1.0 }
 #define YELLOW                                                                 \
     (Color) { .r = 1.0, .g = 1.0, .b = 0.0 }
+#define MAGENTA                                                                \
+    (Color) { .r = 1.0, .g = 0.0, .b = 1.0 }
 #define GREY                                                                   \
     (Color) { .r = 0.3, .g = 0.3, .b = 0.3 }
 #define WHITE                                                                  \

@@ -13,50 +13,70 @@ void scene_init(Scene *scene, size_t capacity) {
 
     scene->lights = NULL;
 
-    Color sphere_color = generate_random_color();
     Element *sphere_red =
-        sphere_create(&(Vec){.x = 1400, .y = 600, .z = 500}, 200.0, &RED);
-    sphere_color = generate_random_color();
+        sphere_create(&(Vec){.x = 700, .y = 400, .z = -100}, 100.0, &RED);
     Element *sphere_green =
-        sphere_create(&(Vec){.x = 200, .y = 800, .z = 500}, 200.0, &GREEN);
-    sphere_color = generate_random_color();
+        sphere_create(&(Vec){.x = 900, .y = 500, .z = -200}, 100.0, &GREEN);
     Element *sphere_blue =
-        sphere_create(&(Vec){.x = 800, .y = 500, .z = 200}, 200.0, &BLUE);
-    Element *floor = plane_create(&(Vec){.x = 0, .y = 1600, .z = 1000},
-                                  &(Vec){.x = 0, .y = 0.5, .z = 1.0}, &GREY);
+        sphere_create(&(Vec){.x = 600, .y = 500, .z = -400}, 100.0, &BLUE);
+    Element *sphere_yellow =
+        sphere_create(&(Vec){.x = 1200, .y = 500, .z = -350}, 100.0, &YELLOW);
+    Element *sphere_magenta =
+        sphere_create(&(Vec){.x = 1600, .y = 500, .z = 100}, 100.0, &MAGENTA);
 
-    Texture tex = gen_checkboard_texture(256);
+    Element *floor = plane_create(&(Vec){.x = 0, .y = 600, .z = 1000},
+                                  &(Vec){.x = 0, .y = 1.0, .z = 0.0}, &GREY);
+
+    Element *ceiling = plane_create(&(Vec){.x = 0, .y = 0, .z = 1000},
+                                  &(Vec){.x = 0, .y = -1.0, .z = .2}, &GREY);
+    Texture tex = gen_checkboard_texture(64);
     set_texture(floor, tex);
+    set_texture(ceiling, tex);
 
-    Surface surface_floor = (Surface){.type = Reflective, .reflectivity = 1.0};
+    Surface surface_floor = (Surface){.type = Reflective, .reflectivity = 0.8};
+    Surface surface_ceiling = (Surface){.type = Diffuse, .reflectivity = 0.3};
     Surface surface_refractive =
         (Surface){.type = Refractive, .index = 1.5, .transparency = 1.0};
     Surface surface_reflective =
-        (Surface){.type = Reflective, .reflectivity = 0.2};
+        (Surface){.type = Reflective, .reflectivity = 0.4};
 
     sphere_red->surface = surface_reflective;
-    sphere_green->surface = surface_reflective;
+    sphere_green->surface = surface_refractive;
     sphere_blue->surface = surface_refractive;
+    sphere_yellow->surface = surface_reflective;
+    sphere_magenta->surface = surface_refractive;
     floor->surface = surface_floor;
+    ceiling->surface = surface_ceiling;
 
     scene_add_object(scene, sphere_red);
     scene_add_object(scene, sphere_green);
     scene_add_object(scene, sphere_blue);
+    scene_add_object(scene, sphere_yellow);
+    scene_add_object(scene, sphere_magenta);
     scene_add_object(scene, floor);
+    scene_add_object(scene, ceiling);
 
     Light *sunlight = directional_light_create(
-        (Vec){.x = 0, .y = 1, .z = 1}, (Color){.r = 1, .g = 1, .b = 1}, 0.7);
+        (Vec){.x = 0, .y = 0, .z = 1.0}, (Color){.r = 1, .g = 1, .b = 0.9}, 1.0);
 
     Light *point_1 =
-        point_light_create((Vec){.x = 1500, .y = 400, .z = 100},
-                           (Color){.r = 1, .g = 1, .b = 1}, 2000000);
+        point_light_create((Vec){.x = 1260, .y = 500, .z = -600},
+                           (Color){.r = 1, .g = 0.6, .b = 0.2}, 500000);
     Light *point_2 =
-        point_light_create((Vec){.x = 100, .y = 500, .z = 500},
-                           (Color){.r = 1, .g = 1, .b = 1}, 2000000);
+        point_light_create((Vec){.x = 700, .y = 500, .z = -700},
+                           (Color){.r = 1, .g = 0.7, .b = 1.0}, 500000);
+    Light *point_3 =
+        point_light_create((Vec){.x = 700, .y = 300, .z = 700},
+                           (Color){.r = 1, .g = 1.0, .b = .7}, 15000000);
 
+    Light *point_4 =
+        point_light_create((Vec){.x = 2900, .y = 500, .z = 1500},
+                           (Color){.r = 1, .g = 1, .b = .8}, 12000000);
     scene_add_light(scene, sunlight);
     scene_add_light(scene, point_1);
     scene_add_light(scene, point_2);
+    scene_add_light(scene, point_3);
+    scene_add_light(scene, point_4);
 }
 
 int scene_add_object(Scene *scene, Element *obj) {
@@ -308,7 +328,8 @@ Intersection trace_ray(Scene *scene, Ray *ray) {
 
 void render(Scene *scene, struct drm_dev *dev) {
     // starting point of the rays
-    Vec origin = {.x = 960, .y = 540, .z = -600};
+    // this is where the eye/camera is
+    Vec origin = {.x = 960, .y = 300, .z = -1000};
     // One Ray through each pixel
     for (int i = 0; i < 1920; i++) {
         for (int j = 0; j < 1080; j++) {

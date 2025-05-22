@@ -52,7 +52,7 @@ int main(int argc, const char **argv) {
         clear(iter);
 
     /* setup and render the scene */
-    scene_init(&scene, 10);
+    scene_init(&scene, 20);
     for (iter = drmm.dev_list; iter; iter = iter->next) {
         render(&scene, iter);
     }
