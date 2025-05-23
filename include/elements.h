@@ -7,20 +7,20 @@
 #include <stddef.h>
 
 typedef enum SURFACE_TYPE {
-    Diffuse,
-    Reflective,
-    Refractive,
+  Diffuse,
+  Reflective,
+  Refractive,
 } SurfaceType;
 
 typedef struct _Surface {
-    SurfaceType type;
-    union {
-        float reflectivity;
-        struct {
-            float index;
-            float transparency;
-        };
+  SurfaceType type;
+  union {
+    float reflectivity;
+    struct {
+      float index;
+      float transparency;
     };
+  };
 } Surface;
 
 /*************
@@ -28,20 +28,20 @@ typedef struct _Surface {
  *************/
 
 typedef struct Element {
-    const struct ElementInterface *const vtable;
-    bool is_textured;
-    union {
-        Color color;
-        Texture texture;
-    };
-    Surface surface;
+  const struct ElementInterface *const vtable;
+  bool is_textured;
+  union {
+    Color color;
+    Texture texture;
+  };
+  Surface surface;
 } Element;
 
 typedef struct ElementInterface {
-    const char *(*print)(struct Element *o);
-    bool (*intersect)(struct Element *o, Ray *ray, float *intersect);
-    Vec (*surface_normal)(struct Element *o, Point *hit_point);
-    TextureCoords (*texture_coords)(struct Element *o, Point *hit_point);
+  const char *(*print)(struct Element *o);
+  bool (*intersect)(struct Element *o, Ray *ray, float *intersect);
+  Vec (*surface_normal)(struct Element *o, Point *hit_point);
+  TextureCoords (*texture_coords)(struct Element *o, Point *hit_point);
 } ElementInterface;
 
 const char *print(struct Element *o);
@@ -52,8 +52,8 @@ void set_color(struct Element *o, Color surface_color);
 void set_texture(struct Element *o, Texture surface_texture);
 
 typedef struct Intersection {
-    float distance;
-    Element *object;
+  float distance;
+  Element *object;
 } Intersection;
 
 /*************
@@ -61,9 +61,9 @@ typedef struct Intersection {
  *************/
 
 typedef struct Plane {
-    struct Element base;
-    Point origin;
-    Vec normal;
+  struct Element base;
+  Point origin;
+  Vec normal;
 } Plane;
 
 Element *plane_create(Point *p, Vec *n, Color *c);
@@ -77,9 +77,9 @@ TextureCoords plane_texture_coords(struct Element *o, Point *hit_point);
  *************/
 
 typedef struct Sphere {
-    struct Element base;
-    Point center;
-    float radius;
+  struct Element base;
+  Point center;
+  float radius;
 } Sphere;
 
 struct Element *sphere_create(Vec *position, float radius, Color *color);

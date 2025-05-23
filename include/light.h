@@ -4,16 +4,16 @@
 #include "vector.h"
 
 typedef struct Light {
-    struct LightInterface const *vtable;
+  struct LightInterface const *vtable;
 
-    Color color;
-    float intensity;
+  Color color;
+  float intensity;
 } Light;
 
 struct LightInterface {
-    float (*intensity)(Light *l, Vec *hit_point);
-    float (*distance)(Light *l, Vec *hit_point);
-    Vec (*direction)(Light *l, Vec *hit_point);
+  float (*intensity)(Light *l, Vec *hit_point);
+  float (*distance)(Light *l, Vec *hit_point);
+  Vec (*direction)(Light *l, Vec *hit_point);
 };
 
 float intensity(Light *l, Vec *hit_point);
@@ -21,19 +21,19 @@ float distance(Light *l, Vec *hit_point);
 Vec direction(Light *l, Vec *hit_point);
 
 typedef struct DirectionalLight {
-    Light base;
-    Vec direction;
+  Light base;
+  Vec direction;
 } DirectionalLight;
 
 typedef struct PointLight {
-    Light base;
-    Color color;
-    Point position;
+  Light base;
+  Color color;
+  Point position;
 } PointLight;
 
 typedef struct Light_list {
-    Light *light;
-    struct Light_list *next;
+  Light *light;
+  struct Light_list *next;
 } Light_list;
 
 Light *directional_light_create(Vec direction, Color color, float intensity);

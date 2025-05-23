@@ -1,6 +1,6 @@
 project('drm-raytracer', 'c',
   version : '0.1',
-  default_options : ['warning_level=3'])
+  default_options : ['warning_level=2', 'werror=true'])
 
 inc_dir = include_directories('include') 
 

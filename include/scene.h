@@ -7,11 +7,11 @@
 #include <stddef.h>
 
 typedef struct Scene {
-    size_t capacity;
-    size_t size;
+  size_t capacity;
+  size_t size;
 
-    Element **objects;
-    Light_list *lights;
+  Element **objects;
+  Light_list *lights;
 } Scene;
 
 void scene_init(Scene *scene, size_t capacity);
